@@ -1,0 +1,872 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ShardX — Blockchain Sharding Protocol</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Fraunces:ital,wght@0,300;0,700;0,900;1,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #050a0f;
+    --surface: #0a1520;
+    --surface2: #0f1e2e;
+    --accent: #00e5ff;
+    --accent2: #ff6b35;
+    --accent3: #39ff14;
+    --text: #e8f4f8;
+    --muted: #4a7a8a;
+    --border: #1a3a4a;
+    --shard-colors: #00e5ff, #ff6b35, #39ff14, #b44dff, #ffd700;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Space Mono', monospace;
+    overflow-x: hidden;
+    cursor: crosshair;
+  }
+
+  /* Grid overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,229,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,229,255,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ---- HERO ---- */
+  header {
+    position: relative;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 4rem 6vw;
+    overflow: hidden;
+    z-index: 1;
+  }
+
+  .hero-bg-orb {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(120px);
+    pointer-events: none;
+    animation: pulse 8s ease-in-out infinite;
+  }
+  .orb1 { width: 600px; height: 600px; background: rgba(0,229,255,0.07); top: -100px; right: -100px; }
+  .orb2 { width: 400px; height: 400px; background: rgba(255,107,53,0.06); bottom: -50px; left: 10%; animation-delay: -4s; }
+
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); opacity: 0.7; }
+    50% { transform: scale(1.1); opacity: 1; }
+  }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(0,229,255,0.1);
+    border: 1px solid rgba(0,229,255,0.3);
+    color: var(--accent);
+    font-size: 0.7rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    padding: 6px 16px;
+    border-radius: 2px;
+    margin-bottom: 2rem;
+    width: fit-content;
+  }
+  .badge::before {
+    content: '';
+    width: 6px; height: 6px;
+    background: var(--accent);
+    border-radius: 50%;
+    animation: blink 1.5s ease-in-out infinite;
+  }
+  @keyframes blink { 0%,100%{opacity:1}50%{opacity:0.2} }
+
+  h1 {
+    font-family: 'Fraunces', serif;
+    font-size: clamp(3rem, 8vw, 7rem);
+    font-weight: 900;
+    line-height: 0.9;
+    letter-spacing: -0.03em;
+    margin-bottom: 1.5rem;
+  }
+  h1 span.accent { color: var(--accent); }
+  h1 span.dim { color: var(--muted); font-weight: 300; font-style: italic; }
+
+  .hero-desc {
+    max-width: 560px;
+    color: #7aabb8;
+    line-height: 1.8;
+    font-size: 0.85rem;
+    margin-bottom: 3rem;
+  }
+
+  .hero-stats {
+    display: flex;
+    gap: 3rem;
+    margin-bottom: 3rem;
+    flex-wrap: wrap;
+  }
+  .stat-block { display: flex; flex-direction: column; gap: 4px; }
+  .stat-num {
+    font-family: 'Fraunces', serif;
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--accent);
+    line-height: 1;
+  }
+  .stat-num.red { color: var(--accent2); }
+  .stat-num.green { color: var(--accent3); }
+  .stat-label { font-size: 0.65rem; color: var(--muted); letter-spacing: 0.15em; text-transform: uppercase; }
+
+  .cta-row { display: flex; gap: 1rem; flex-wrap: wrap; }
+  .btn {
+    padding: 14px 28px;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-decoration: none;
+    display: inline-block;
+  }
+  .btn-primary {
+    background: var(--accent);
+    color: var(--bg);
+  }
+  .btn-primary:hover { background: #fff; }
+  .btn-outline {
+    background: transparent;
+    color: var(--accent);
+    border: 1px solid var(--accent);
+  }
+  .btn-outline:hover { background: rgba(0,229,255,0.1); }
+
+  /* ---- SIMULATOR SECTION ---- */
+  section { position: relative; z-index: 1; }
+
+  .section-label {
+    font-size: 0.65rem;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .section-label::after {
+    content: '';
+    flex: 1;
+    max-width: 60px;
+    height: 1px;
+    background: var(--accent);
+    opacity: 0.4;
+  }
+
+  h2 {
+    font-family: 'Fraunces', serif;
+    font-size: clamp(1.8rem, 4vw, 3rem);
+    font-weight: 700;
+    margin-bottom: 1rem;
+    line-height: 1.1;
+  }
+
+  /* SIMULATOR */
+  .simulator {
+    padding: 6rem 6vw;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+  }
+
+  .sim-controls {
+    display: flex;
+    gap: 2rem;
+    margin: 2rem 0;
+    flex-wrap: wrap;
+    align-items: flex-end;
+  }
+
+  .control-group { display: flex; flex-direction: column; gap: 8px; }
+  .control-group label { font-size: 0.65rem; color: var(--muted); letter-spacing: 0.15em; text-transform: uppercase; }
+
+  input[type=range] {
+    -webkit-appearance: none;
+    width: 180px;
+    height: 3px;
+    background: var(--border);
+    outline: none;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 14px; height: 14px;
+    background: var(--accent);
+    border-radius: 0;
+    cursor: pointer;
+  }
+  .range-val { font-size: 0.8rem; color: var(--accent); }
+
+  .btn-run {
+    background: var(--accent);
+    color: var(--bg);
+    padding: 12px 24px;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.75rem;
+    border: none;
+    cursor: pointer;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    transition: all 0.2s;
+  }
+  .btn-run:hover { background: #fff; }
+  .btn-run.running { background: var(--accent2); }
+
+  /* Canvas area */
+  .sim-viz {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    position: relative;
+    overflow: hidden;
+    height: 380px;
+    margin-top: 1.5rem;
+  }
+
+  canvas#simCanvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+
+  /* Metrics bar */
+  .metrics-bar {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    margin-top: 1px;
+  }
+  .metric {
+    background: var(--surface2);
+    padding: 1.2rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .metric-val {
+    font-family: 'Fraunces', serif;
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--accent3);
+    line-height: 1;
+    transition: color 0.3s;
+  }
+  .metric-val.warning { color: var(--accent2); }
+  .metric-label { font-size: 0.6rem; color: var(--muted); letter-spacing: 0.15em; text-transform: uppercase; }
+
+  /* ---- HOW IT WORKS ---- */
+  .how {
+    padding: 6rem 6vw;
+    border-top: 1px solid var(--border);
+  }
+
+  .steps {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1px;
+    background: var(--border);
+    margin-top: 3rem;
+  }
+  .step {
+    background: var(--bg);
+    padding: 2.5rem 2rem;
+    position: relative;
+    overflow: hidden;
+    transition: background 0.3s;
+  }
+  .step:hover { background: var(--surface); }
+  .step-num {
+    font-family: 'Fraunces', serif;
+    font-size: 4rem;
+    font-weight: 900;
+    color: rgba(0,229,255,0.08);
+    line-height: 1;
+    position: absolute;
+    top: 1rem;
+    right: 1.5rem;
+  }
+  .step-icon {
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+  }
+  .step h3 {
+    font-family: 'Fraunces', serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-bottom: 0.75rem;
+  }
+  .step p { font-size: 0.75rem; color: var(--muted); line-height: 1.8; }
+
+  /* ---- COMPARISON ---- */
+  .comparison {
+    padding: 6rem 6vw;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+  }
+
+  .compare-table {
+    margin-top: 3rem;
+    border: 1px solid var(--border);
+    overflow: hidden;
+  }
+  .compare-row {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr;
+    gap: 0;
+  }
+  .compare-cell {
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+    border-right: 1px solid var(--border);
+    font-size: 0.75rem;
+  }
+  .compare-cell:last-child { border-right: none; }
+  .compare-row.header .compare-cell {
+    background: var(--surface2);
+    color: var(--accent);
+    font-size: 0.65rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+  }
+  .compare-row.highlight .compare-cell { background: rgba(0,229,255,0.05); }
+  .compare-row.highlight .compare-cell:nth-child(4) { color: var(--accent3); font-weight: bold; }
+  .tag-bad { color: var(--accent2); }
+  .tag-good { color: var(--accent3); }
+
+  /* ---- FOOTER ---- */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 3rem 6vw;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: gap;
+    color: var(--muted);
+    font-size: 0.7rem;
+    z-index: 1;
+    position: relative;
+  }
+
+  .footer-logo {
+    font-family: 'Fraunces', serif;
+    font-size: 1.5rem;
+    font-weight: 900;
+    color: var(--text);
+  }
+  .footer-logo span { color: var(--accent); }
+
+  /* TPS Live counter animation */
+  @keyframes countUp {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .animating { animation: countUp 0.3s ease-out; }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); }
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<header>
+  <div class="hero-bg-orb orb1"></div>
+  <div class="hero-bg-orb orb2"></div>
+
+  <div class="badge">Blockchain Research Tool</div>
+
+  <h1>
+    Shard<span class="accent">X</span><br>
+    <span class="dim">Protocol</span>
+  </h1>
+
+  <p class="hero-desc">
+    A sharding protocol simulator demonstrating how parallel block validation
+    can break the 15–30 TPS bottleneck of sequential blockchains — targeting
+    1000+ TPS while preserving decentralization and security.
+  </p>
+
+  <div class="hero-stats">
+    <div class="stat-block">
+      <div class="stat-num red">~22</div>
+      <div class="stat-label">Ethereum TPS (current)</div>
+    </div>
+    <div class="stat-block">
+      <div class="stat-num">1,700</div>
+      <div class="stat-label">Visa TPS</div>
+    </div>
+    <div class="stat-block">
+      <div class="stat-num green">1000+</div>
+      <div class="stat-label">ShardX Target TPS</div>
+    </div>
+  </div>
+
+  <div class="cta-row">
+    <a href="#simulator" class="btn btn-primary">Run Simulator</a>
+    <a href="#how" class="btn btn-outline">How It Works</a>
+  </div>
+</header>
+
+<!-- SIMULATOR -->
+<section class="simulator" id="simulator">
+  <div class="section-label">Interactive Tool</div>
+  <h2>Sharding Simulator</h2>
+  <p style="color:var(--muted);font-size:0.8rem;max-width:500px;line-height:1.8;">
+    Adjust the number of shards and transactions per block, then run the simulation
+    to see how throughput scales with parallel processing.
+  </p>
+
+  <div class="sim-controls">
+    <div class="control-group">
+      <label>Number of Shards</label>
+      <input type="range" id="shardCount" min="1" max="8" value="4" oninput="updateControls()">
+      <span class="range-val" id="shardVal">4 shards</span>
+    </div>
+    <div class="control-group">
+      <label>Tx per Block</label>
+      <input type="range" id="txPerBlock" min="10" max="100" value="50" step="10" oninput="updateControls()">
+      <span class="range-val" id="txVal">50 tx/block</span>
+    </div>
+    <div class="control-group">
+      <label>Block Time (s)</label>
+      <input type="range" id="blockTime" min="1" max="12" value="6" oninput="updateControls()">
+      <span class="range-val" id="btVal">6s</span>
+    </div>
+    <button class="btn-run" id="runBtn" onclick="toggleSim()">▶ Start</button>
+  </div>
+
+  <div class="sim-viz">
+    <canvas id="simCanvas"></canvas>
+  </div>
+
+  <div class="metrics-bar">
+    <div class="metric">
+      <div class="metric-val" id="tpsDisplay">0</div>
+      <div class="metric-label">Estimated TPS</div>
+    </div>
+    <div class="metric">
+      <div class="metric-val" id="shardsDisplay">4</div>
+      <div class="metric-label">Active Shards</div>
+    </div>
+    <div class="metric">
+      <div class="metric-val" id="txDisplay">0</div>
+      <div class="metric-label">Total Tx Processed</div>
+    </div>
+    <div class="metric">
+      <div class="metric-val" id="blockDisplay">0</div>
+      <div class="metric-label">Blocks Finalized</div>
+    </div>
+    <div class="metric">
+      <div class="metric-val" id="xsardDisplay">0</div>
+      <div class="metric-label">Cross-Shard Msgs</div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="how" id="how">
+  <div class="section-label">Architecture</div>
+  <h2>How Sharding Works</h2>
+
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">01</div>
+      <div class="step-icon">⛓</div>
+      <h3>Network Partitioning</h3>
+      <p>The network is divided into N shards, each responsible for a subset of accounts and transactions. Validators are randomly assigned to shards to prevent collusion.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">02</div>
+      <div class="step-icon">⚡</div>
+      <h3>Intra-Shard Consensus</h3>
+      <p>Each shard runs its own BFT consensus independently in parallel. This multiplies throughput linearly — 4 shards = ~4× the TPS of a single chain.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">03</div>
+      <div class="step-icon">🔗</div>
+      <h3>Cross-Shard Communication</h3>
+      <p>Transactions spanning multiple shards use a secure relay protocol with cryptographic receipts, ensuring atomicity without a centralized coordinator.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">04</div>
+      <div class="step-icon">🛡</div>
+      <h3>Security Preservation</h3>
+      <p>Random validator reassignment each epoch prevents targeted attacks. Each shard maintains full Merkle proof support for cross-chain verification.</p>
+    </div>
+  </div>
+</section>
+
+<!-- COMPARISON -->
+<section class="comparison" id="compare">
+  <div class="section-label">Benchmark</div>
+  <h2>Protocol Comparison</h2>
+
+  <div class="compare-table">
+    <div class="compare-row header">
+      <div class="compare-cell">Protocol</div>
+      <div class="compare-cell">TPS</div>
+      <div class="compare-cell">Decentralized</div>
+      <div class="compare-cell">Scalability</div>
+    </div>
+    <div class="compare-row">
+      <div class="compare-cell">Ethereum (PoS)</div>
+      <div class="compare-cell tag-bad">15–30</div>
+      <div class="compare-cell tag-good">Yes</div>
+      <div class="compare-cell tag-bad">Low</div>
+    </div>
+    <div class="compare-row">
+      <div class="compare-cell">Bitcoin</div>
+      <div class="compare-cell tag-bad">3–7</div>
+      <div class="compare-cell tag-good">Yes</div>
+      <div class="compare-cell tag-bad">Very Low</div>
+    </div>
+    <div class="compare-row">
+      <div class="compare-cell">Solana</div>
+      <div class="compare-cell" style="color:#ffd700">2,000–3,000</div>
+      <div class="compare-cell tag-bad">Partial</div>
+      <div class="compare-cell" style="color:#ffd700">High</div>
+    </div>
+    <div class="compare-row">
+      <div class="compare-cell">Visa Network</div>
+      <div class="compare-cell" style="color:#ffd700">1,700</div>
+      <div class="compare-cell tag-bad">No (Centralized)</div>
+      <div class="compare-cell tag-good">High</div>
+    </div>
+    <div class="compare-row highlight">
+      <div class="compare-cell"><strong>ShardX Protocol</strong></div>
+      <div class="compare-cell tag-good">1,000–4,000+</div>
+      <div class="compare-cell tag-good">Yes</div>
+      <div class="compare-cell tag-good">✦ Very High</div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-logo">Shard<span>X</span></div>
+  <div>Blockchain Sharding Protocol — Research Simulator</div>
+  <div>TPS target: <span style="color:var(--accent3)">1000+</span></div>
+</footer>
+
+<script>
+  // ---- Controls ----
+  function updateControls() {
+    document.getElementById('shardVal').textContent = document.getElementById('shardCount').value + ' shards';
+    document.getElementById('txVal').textContent = document.getElementById('txPerBlock').value + ' tx/block';
+    document.getElementById('btVal').textContent = document.getElementById('blockTime').value + 's';
+    document.getElementById('shardsDisplay').textContent = document.getElementById('shardCount').value;
+    updateTPS();
+  }
+
+  function updateTPS() {
+    const shards = +document.getElementById('shardCount').value;
+    const tx = +document.getElementById('txPerBlock').value;
+    const bt = +document.getElementById('blockTime').value;
+    const tps = Math.round((shards * tx) / bt);
+    document.getElementById('tpsDisplay').textContent = tps.toLocaleString();
+    const el = document.getElementById('tpsDisplay');
+    el.classList.remove('animating');
+    void el.offsetWidth;
+    el.classList.add('animating');
+    el.className = 'metric-val' + (tps < 100 ? ' warning' : '') + ' animating';
+  }
+
+  // ---- Canvas Simulator ----
+  const canvas = document.getElementById('simCanvas');
+  const ctx = canvas.getContext('2d');
+  let animId = null;
+  let running = false;
+  let totalTx = 0;
+  let totalBlocks = 0;
+  let totalXshard = 0;
+  let time = 0;
+
+  const SHARD_COLORS = ['#00e5ff','#ff6b35','#39ff14','#b44dff','#ffd700','#ff4d6d','#00f5a0','#ff9f43'];
+
+  function resize() {
+    const rect = canvas.parentElement.getBoundingClientRect();
+    canvas.width = rect.width;
+    canvas.height = rect.height;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  // Particle pool
+  let particles = [];
+
+  function spawnParticles(shards) {
+    const w = canvas.width, h = canvas.height;
+    const shardW = w / shards;
+
+    for (let s = 0; s < shards; s++) {
+      const cx = shardW * s + shardW / 2;
+      const cy = h / 2;
+      const count = Math.floor(3 + Math.random() * 4);
+      for (let i = 0; i < count; i++) {
+        particles.push({
+          x: cx + (Math.random() - 0.5) * shardW * 0.5,
+          y: h * 0.15 + Math.random() * h * 0.6,
+          vx: (Math.random() - 0.5) * 1.2,
+          vy: (Math.random() - 0.5) * 1.2,
+          life: 1,
+          decay: 0.008 + Math.random() * 0.008,
+          radius: 1.5 + Math.random() * 2,
+          color: SHARD_COLORS[s % SHARD_COLORS.length],
+          shard: s
+        });
+      }
+    }
+
+    // Cross-shard message occasionally
+    if (shards > 1 && Math.random() < 0.3) {
+      const from = Math.floor(Math.random() * shards);
+      let to = Math.floor(Math.random() * shards);
+      if (to === from) to = (from + 1) % shards;
+      particles.push({
+        x: shardW * from + shardW / 2,
+        y: h / 2,
+        tx: shardW * to + shardW / 2,
+        ty: h / 2,
+        progress: 0,
+        isCross: true,
+        color: '#ffffff',
+        shard: -1
+      });
+      totalXshard++;
+      document.getElementById('xsardDisplay').textContent = totalXshard;
+    }
+  }
+
+  let frameCount = 0;
+  let lastSpawn = 0;
+
+  function draw() {
+    const shards = +document.getElementById('shardCount').value;
+    const tx = +document.getElementById('txPerBlock').value;
+    const bt = +document.getElementById('blockTime').value;
+    const w = canvas.width, h = canvas.height;
+    time++;
+    frameCount++;
+
+    // Spawn rate based on sim speed
+    const spawnInterval = Math.max(4, Math.round(30 / shards));
+    if (frameCount - lastSpawn > spawnInterval) {
+      spawnParticles(shards);
+      lastSpawn = frameCount;
+
+      // Update counters
+      const txAdded = Math.round(tx * shards / (bt * 10));
+      totalTx += txAdded;
+      document.getElementById('txDisplay').textContent = totalTx.toLocaleString();
+    }
+
+    // Clear
+    ctx.fillStyle = '#050a0f';
+    ctx.fillRect(0, 0, w, h);
+
+    // Draw grid
+    ctx.strokeStyle = 'rgba(0,229,255,0.04)';
+    ctx.lineWidth = 1;
+    for (let x = 0; x < w; x += 40) {
+      ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();
+    }
+    for (let y = 0; y < h; y += 40) {
+      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
+    }
+
+    const shardW = w / shards;
+
+    // Draw shard lanes
+    for (let s = 0; s < shards; s++) {
+      const sx = shardW * s;
+      const col = SHARD_COLORS[s % SHARD_COLORS.length];
+
+      // Lane background
+      const grad = ctx.createLinearGradient(sx, 0, sx + shardW, 0);
+      grad.addColorStop(0, 'transparent');
+      grad.addColorStop(0.5, hexToRgba(col, 0.03));
+      grad.addColorStop(1, 'transparent');
+      ctx.fillStyle = grad;
+      ctx.fillRect(sx, 0, shardW, h);
+
+      // Lane border
+      if (s > 0) {
+        ctx.strokeStyle = hexToRgba(col, 0.15);
+        ctx.lineWidth = 1;
+        ctx.setLineDash([4, 8]);
+        ctx.beginPath();
+        ctx.moveTo(sx, 20);
+        ctx.lineTo(sx, h - 20);
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+
+      // Shard label
+      ctx.fillStyle = col;
+      ctx.font = '700 10px Space Mono';
+      ctx.globalAlpha = 0.5;
+      ctx.fillText(`SHARD ${s}`, sx + 12, 24);
+      ctx.globalAlpha = 1;
+
+      // Block chain visualization - animated line
+      const blockPeriod = bt * 60; // frames
+      const phase = (time % blockPeriod) / blockPeriod;
+      const chainY = h * 0.75;
+      const blockSpacing = Math.min(shardW * 0.8, 80);
+
+      for (let b = 0; b < 5; b++) {
+        const bx = sx + shardW * 0.1 + b * (shardW * 0.18) - (phase * shardW * 0.18);
+        if (bx < sx || bx > sx + shardW) continue;
+        const bw = Math.min(shardW * 0.14, 50);
+        const bh = 24;
+
+        ctx.strokeStyle = hexToRgba(col, 0.5);
+        ctx.lineWidth = 1;
+        ctx.strokeRect(bx, chainY - bh / 2, bw, bh);
+
+        ctx.fillStyle = hexToRgba(col, 0.07);
+        ctx.fillRect(bx, chainY - bh / 2, bw, bh);
+
+        // Hash lines
+        ctx.fillStyle = hexToRgba(col, 0.3);
+        ctx.font = '7px Space Mono';
+        ctx.fillText('▒▒▒', bx + 4, chainY + 3);
+      }
+
+      // Chain line
+      ctx.strokeStyle = hexToRgba(col, 0.2);
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(sx + 4, chainY);
+      ctx.lineTo(sx + shardW - 4, chainY);
+      ctx.stroke();
+
+      // Pulsing consensus indicator
+      const pulseR = 4 + Math.sin(time * 0.05 + s * 1.3) * 2;
+      ctx.beginPath();
+      ctx.arc(sx + shardW / 2, h * 0.2, pulseR, 0, Math.PI * 2);
+      ctx.fillStyle = hexToRgba(col, 0.6);
+      ctx.fill();
+      // Ripple
+      ctx.beginPath();
+      ctx.arc(sx + shardW / 2, h * 0.2, pulseR + 6 + Math.sin(time * 0.05 + s) * 3, 0, Math.PI * 2);
+      ctx.strokeStyle = hexToRgba(col, 0.2);
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      // TPS indicator
+      const localTPS = Math.round(tx / bt);
+      ctx.fillStyle = hexToRgba(col, 0.8);
+      ctx.font = '700 11px Space Mono';
+      ctx.fillText(`${localTPS} TPS`, sx + shardW / 2 - 20, h * 0.2 + 22);
+    }
+
+    // Update & draw particles
+    particles = particles.filter(p => {
+      if (p.isCross) {
+        p.progress += 0.025;
+        if (p.progress >= 1) return false;
+        const px = p.x + (p.tx - p.x) * p.progress;
+        const py = p.y + (p.ty - p.y) * p.progress + Math.sin(p.progress * Math.PI) * -30;
+
+        ctx.beginPath();
+        ctx.arc(px, py, 2.5, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(255,255,255,${0.8 * (1 - p.progress)})`;
+        ctx.fill();
+        // Trail
+        ctx.strokeStyle = `rgba(255,255,255,${0.2 * (1 - p.progress)})`;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(p.x, p.y);
+        ctx.quadraticCurveTo(
+          (p.x + p.tx) / 2, p.y - 30,
+          px, py
+        );
+        ctx.stroke();
+        return true;
+      }
+
+      p.x += p.vx;
+      p.y += p.vy;
+      p.life -= p.decay;
+      if (p.life <= 0) return false;
+
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+      ctx.fillStyle = hexToRgba(p.color, p.life * 0.7);
+      ctx.fill();
+      return true;
+    });
+
+    // Block finalization events
+    if (frameCount % Math.round(bt * 60) === 0) {
+      totalBlocks += shards;
+      document.getElementById('blockDisplay').textContent = totalBlocks;
+    }
+
+    animId = requestAnimationFrame(draw);
+  }
+
+  function hexToRgba(hex, alpha) {
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+    return `rgba(${r},${g},${b},${alpha})`;
+  }
+
+  function toggleSim() {
+    const btn = document.getElementById('runBtn');
+    if (running) {
+      running = false;
+      cancelAnimationFrame(animId);
+      btn.textContent = '▶ Start';
+      btn.classList.remove('running');
+    } else {
+      running = true;
+      btn.textContent = '■ Stop';
+      btn.classList.add('running');
+      totalTx = 0; totalBlocks = 0; totalXshard = 0; particles = []; frameCount = 0;
+      draw();
+    }
+  }
+
+  // Scroll to simulator
+  document.querySelector('a[href="#simulator"]').addEventListener('click', e => {
+    e.preventDefault();
+    document.getElementById('simulator').scrollIntoView({ behavior: 'smooth' });
+  });
+  document.querySelector('a[href="#how"]').addEventListener('click', e => {
+    e.preventDefault();
+    document.getElementById('how').scrollIntoView({ behavior: 'smooth' });
+  });
+
+  updateControls();
+</script>
+</body>
+</html>
